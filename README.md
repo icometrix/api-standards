@@ -1,4 +1,4 @@
-# White House Web API Standards
+# White House Web API Standards, adapted for icoMetrix
 
 * [Guidelines](#guidelines)
 * [Pragmatic REST](#pragmatic-rest)
@@ -26,9 +26,8 @@ This document borrows heavily from:
 
 These guidelines aim to support a truly RESTful API. Here are a few exceptions:
 * Put the version number of the API in the URL (see examples below). Don’t accept any requests that do not specify a version number.
-* Allow users to request formats like JSON or XML like this:
-    * http://example.gov/api/v1/magazines.json
-    * http://example.gov/api/v1/magazines.xml
+    * http://example.gov/api/v1/magazines
+* By default use JSON
 
 ## RESTful URLs
 
@@ -38,25 +37,25 @@ These guidelines aim to support a truly RESTful API. Here are a few exceptions:
 * Use plural nouns only for consistency (no singular nouns).
 * Use HTTP verbs (GET, POST, PUT, DELETE) to operate on the collections and elements.
 * You shouldn’t need to go deeper than resource/identifier/resource.
-* Put the version number at the base of your URL, for example http://example.com/v1/path/to/resource.
+* Put the version number at the base of your URL, for example http://example.com/api/v1/path/to/resource.
 * URL v. header:
     * If it changes the logic you write to handle the response, put it in the URL.
     * If it doesn’t change the logic for each response, like OAuth info, put it in the header.
 * Specify optional fields in a comma separated list.
-* Formats should be in the form of api/v2/resource/{id}.json
+* Formats should be in the form of api/v2/resource/{id}?format=zip
 
 ### Good URL examples
 * List of magazines:
-    * GET http://www.example.gov/api/v1/magazines.json
+    * GET http://www.example.gov/api/v1/magazines
 * Filtering is a query:
-    * GET http://www.example.gov/api/v1/magazines.json?year=2011&sort=desc
-    * GET http://www.example.gov/api/v1/magazines.json?topic=economy&year=2011
+    * GET http://www.example.gov/api/v1/magazines?year=2011&sort=desc
+    * GET http://www.example.gov/api/v1/magazines?topic=economy&year=2011
 * A single magazine in JSON format:
-    * GET http://www.example.gov/api/v1/magazines/1234.json
+    * GET http://www.example.gov/api/v1/magazines/1234
 * All articles in (or belonging to) this magazine:
-    * GET http://www.example.gov/api/v1/magazines/1234/articles.json
+    * GET http://www.example.gov/api/v1/magazines/1234/articles
 * All articles in this magazine in XML format:
-    * GET http://example.gov/api/v1/magazines/1234/articles.xml
+    * GET http://example.gov/api/v1/magazines/1234/articles?format=xml
 * Specify optional fields in a comma separated list:
     * GET http://www.example.gov/api/v1/magazines/1234.json?fields=title,subtitle,date
 * Add a new article to a particular magazine:
@@ -87,7 +86,8 @@ The action taken on the representation will be contextual to the media type bein
 
 
 ## Responses
-
+* include identifiers
+* include URIs
 * No values in keys
 * No internal-specific names (e.g. "node" and "taxonomy term")
 * Metadata should only contain direct properties of the response set, not properties of the members of the response set
@@ -97,8 +97,8 @@ The action taken on the representation will be contextual to the media type bein
 No values in keys:
 
     "tags": [
-      {"id": "125", "name": "Environment"},
-      {"id": "834", "name": "Water Quality"}
+      {"id": "fe264a48-cca7-4760-aaf7-be8402c506bc", "name": "Environment", "uri": "/path/to/resource"},
+      {"id": "fe264a48-cca7-4760-aaf7-be8402c507bc", "name": "Water Quality", "uri": "/path/to/resource"}
     ],
 
 
@@ -116,20 +116,20 @@ Values in keys:
 
 Error responses should include a common HTTP status code, message for the developer, message for the end-user (when appropriate), internal error code (corresponding to some specific internally determined ID), links where developers can find more info. For example:
 
-    {
-      "status" : 400,
-      "developerMessage" : "Verbose, plain language description of the problem. Provide developers
-       suggestions about how to solve their problems here",
-      "userMessage" : "This is a message that can be passed along to end-users, if needed.",
-      "errorCode" : "444444",
-      "moreInfo" : "http://www.example.gov/developer/path/to/help/for/444444,
-       http://drupal.org/node/444444",
+    { "id": "fe264a48-cca7-4760-aaf7-be8402c506bc"
+      "developer_message" : "Verbose, plain language description of the problem. Provide developers
+       suggestions about how to solve their problems here *[NO CONFIDENTIAL INFO]*",
+      "user_message" : "This is a message that can be passed along to end-users, if needed.",
+      "error_code" : "444444",
+      "more_info" : "http://www.example.gov/developer/path/to/help/for/444444",
     }
 
-Use three simple, common response codes indicating (1) success, (2) failure due to client-side problem, (3) failure due to server-side problem:
+Follow http standards, be specific!
 * 200 - OK
 * 400 - Bad Request
 * 500 - Internal Server Error
+* 404 - Not found
+* 401 - Unauthorized etc...
 
 
 ## Versions
@@ -152,7 +152,7 @@ Use three simple, common response codes indicating (1) success, (2) failure due 
 Information about record limits and total available count should also be included in the response. Example:
 
     {
-        "metadata": {
+        "meta_data": {
             "resultset": {
                 "count": 227,
                 "offset": 25,
@@ -172,12 +172,12 @@ Information about record limits and total available count should also be include
 
 ### GET /magazines
 
-Example: http://example.gov/api/v1/magazines.json
+Example: http://example.gov/api/v1/magazines
 
 Response body:
 
     {
-        "metadata": {
+        "meta_data": {
             "resultset": {
                 "count": 123,
                 "offset": 0,
@@ -186,52 +186,56 @@ Response body:
         },
         "results": [
             {
-                "id": "1234",
+                "id": "a_guid",
                 "type": "magazine",
                 "title": "Public Water Systems",
                 "tags": [
                     {"id": "125", "name": "Environment"},
                     {"id": "834", "name": "Water Quality"}
                 ],
-                "created": "1231621302"
+                "created": "2011-12-19T15:28:46.493Z",
+                "uri": "/path/to/resource"
             },
             {
-                "id": 2351,
+                "id": "a_guid",
                 "type": "magazine",
                 "title": "Public Schools",
                 "tags": [
                     {"id": "125", "name": "Elementary"},
                     {"id": "834", "name": "Charter Schools"}
                 ],
-                "created": "126251302"
+                "created": "2011-12-19T15:28:46.493Z",
+                "uri": "/path/to/resource"
             }
             {
-                "id": 2351,
+                "id": ""a_guid,
                 "type": "magazine",
                 "title": "Public Schools",
                 "tags": [
-                    {"id": "125", "name": "Pre-school"},
+                    {"id": "a_guid, "name": "Pre-school"},
                 ],
-                "created": "126251302"
+                "created": "2011-12-19T15:28:46.493Z",
+                "uri": "/path/to/resource"
             }
         ]
     }
 
 ### GET /magazines/[id]
 
-Example: http://example.gov/api/v1/magazines/[id].json
+Example: http://example.gov/api/v1/magazines/[id]
 
 Response body:
-
+...
     {
-        "id": "1234",
+        "id": "fe264a48-cca7-4760-aaf7-be8402c506bc",
         "type": "magazine",
         "title": "Public Water Systems",
         "tags": [
-            {"id": "125", "name": "Environment"},
-            {"id": "834", "name": "Water Quality"}
+            {"id": "fe264a48-cca7-4760-aaf7-be8402c506bc", "name": "Environment"},
+            {"id": "other_guid", "name": "Water Quality"}
         ],
-        "created": "1231621302"
+        "created": "2011-12-19T15:28:46.493Z",
+        "uri": "/path/to/resource"
     }
 
 
@@ -255,6 +259,22 @@ Request body:
         }
     ]
 
+Response:
+{
+    "meta_data": {...},
+
+    results: [
+    {
+        "the posted data",
+        "uri": "/path/to/resource"
+        "created": "2011-12-19T15:28:46.493Z",
+        "id": "a_guid"
+    }
+    
+    ]
+}
+
+
 
 ## Mock Responses
 It is suggested that each resource accept a 'mock' parameter on the testing server. Passing this parameter should return a mock data response (bypassing the backend).
@@ -262,34 +282,3 @@ It is suggested that each resource accept a 'mock' parameter on the testing serv
 Implementing this feature early in development ensures that the API will exhibit consistent behavior, supporting a test driven development methodology.
 
 Note: If the mock parameter is included in a request to the production environment, an error should be raised.
-
-
-## JSONP
-
-JSONP is easiest explained with an example. Here's one from [StackOverflow](http://stackoverflow.com/questions/2067472/what-is-jsonp-all-about?answertab=votes#tab-top):
-
-> Say you're on domain abc.com, and you want to make a request to domain xyz.com. To do so, you need to cross domain boundaries, a no-no in most of browserland.
-
-> The one item that bypasses this limitation is `<script>` tags. When you use a script tag, the domain limitation is ignored, but under normal circumstances, you can't really DO anything with the results, the script just gets evaluated.
-
-> Enter JSONP. When you make your request to a server that is JSONP enabled, you pass a special parameter that tells the server a little bit about your page. That way, the server is able to nicely wrap up its response in a way that your page can handle.
-
-> For example, say the server expects a parameter called "callback" to enable its JSONP capabilities. Then your request would look like:
-
->         http://www.xyz.com/sample.aspx?callback=mycallback
-
-> Without JSONP, this might return some basic javascript object, like so:
-
->         { foo: 'bar' }
-
-> However, with JSONP, when the server receives the "callback" parameter, it wraps up the result a little differently, returning something like this:
-
->         mycallback({ foo: 'bar' });
-
-> As you can see, it will now invoke the method you specified. So, in your page, you define the callback function:
-
->         mycallback = function(data){
->             alert(data.foo);
->         };
-
-http://stackoverflow.com/questions/2067472/what-is-jsonp-all-about?answertab=votes#tab-top
