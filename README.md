@@ -1,4 +1,4 @@
-# White House Web API Standards, adapted for icoMetrix
+# icoMetrix API Standards
 
 * [Guidelines](#guidelines)
 * [Pragmatic REST](#pragmatic-rest)
