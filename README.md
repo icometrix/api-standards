@@ -225,7 +225,7 @@ Response body:
 Example: http://example.gov/api/v1/magazines/[id]
 
 Response body:
-...
+
     {
         "id": "fe264a48-cca7-4760-aaf7-be8402c506bc",
         "type": "magazine",
